@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 源码深度研究 - Rafa_learn_cc</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+            --accent-secondary: #238636;
+            --accent-warning: #d29922;
+            --accent-danger: #da3633;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            margin-bottom: 3rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--bg-tertiary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent-primary);
+        }
+
+        .stat-card .label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Sections */
+        section {
+            margin-bottom: 4rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem;
+            color: var(--accent-secondary);
+        }
+
+        h4 {
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.5rem;
+            color: var(--accent-warning);
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--accent-primary);
+        }
+
+        .card ul {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .card li {
+            padding: 0.3rem 0;
+            color: var(--text-secondary);
+        }
+
+        .card li:before {
+            content: "→ ";
+            color: var(--accent-secondary);
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        code {
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        code.inline {
+            background-color: var(--bg-tertiary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: var(--accent-primary);
+        }
+
+        /* Diagrams */
+        .diagram {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        .diagram pre {
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-tertiary);
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+        }
+
+        /* Highlights */
+        .highlight {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-left: 3px solid var(--accent-primary);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .tip {
+            background-color: rgba(35, 134, 54, 0.1);
+            border-left: 3px solid var(--accent-secondary);
+        }
+
+        .warning {
+            background-color: rgba(210, 153, 34, 0.1);
+            border-left: 3px solid var(--accent-warning);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .progress-bar {
+            background-color: var(--bg-primary);
+            border-radius: 4px;
+            height: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            margin-top: 4rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav ul {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="#overview">概览</a></li>
+            <li><a href="#architecture">架构</a></li>
+            <li><a href="#patterns">模式</a></li>
+            <li><a href="#modules">模块</a></li>
+            <li><a href="#insights">洞见</a></li>
+            <li><a href="#security">安全</a></li>
+            <li><a href="#performance">性能</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" id="overview">
+            <h1>Claude Code 源码深度研究</h1>
+            <p>全面深入学习 guanshan/ClaudeCode 源码，提取设计思路、架构模式和可复用经验。这是一个完整的学习项目，涵盖 121 个文件，生成 35+ 笔记文档。</p>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="number">11</div>
+                    <div class="label">分析模块</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">121</div>
+                    <div class="label">分析文件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">35+</div>
+                    <div class="label">生成笔记</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">60+</div>
+                    <div class="label">工具数量</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture">
+            <h2>🏗️ 架构全景图</h2>
+
+            <div class="diagram">
+                <pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                      PRESENTATION LAYER                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │  Components │  │   Commands  │  │      Keybindings        │  │
+│  │  (React)    │  │  (/slash)   │  │   (Keyboard Shortcuts)  │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                         CORE LAYER                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │    Query    │  │    Tools    │  │    Agent System         │  │
+│  │   Engine    │  │  (60+)      │  │  (Spawn/Resume/Teams)   │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                      STATE & MESSAGES                            │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │    Store    │  │   Messages  │  │      Streaming          │  │
+│  │  (Pub/Sub)  │  │  (Types)    │  │     (SSE/Tools)         │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                       SERVICES LAYER                             │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌───────────┐  │
+│  │   API   │ │   MCP   │ │ Compact │ │Analytics│ │   Voice   │  │
+│  │ (Multi  │ │(Servers)│ │(Context)│ │(Events) │ │   (STT)   │  │
+│  │Provider)│ │         │ │         │ │         │ │           │  │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └───────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                      INFRASTRUCTURE                              │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌───────────┐  │
+│  │  Auth   │ │ Config  │ │  Hooks  │ │  Bridge │ │   Utils   │  │
+│  │(OAuth)  │ │(Global+ │ │(29     │ │(CCR)    │ │(Helpers)  │  │
+│  │         │ │Project) │ │ Events) │ │         │ │           │  │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └───────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                      ENTRY POINTS                                │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌───────────┐  │
+│  │   CLI   │ │   SDK   │ │ Daemon  │ │ Bridge  │ │  Remote   │  │
+│  │ (main)  │ │ (Agent) │ │ (bg)    │ │ (CCR)   │ │ (SSH)     │  │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └───────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+
+            <h3>核心设计原则</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🎯 类型安全</h3>
+                    <ul>
+                        <li>TypeScript 严格模式</li>
+                        <li>编译时类型检查</li>
+                        <li>泛型工具接口</li>
+                        <li>条件类型编程</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🔒 安全优先</h3>
+                    <ul>
+                        <li>Fail-closed 默认</li>
+                        <li>多层权限检查</li>
+                        <li>Sandbox 执行</li>
+                        <li>输入验证</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>⚡ 性能优化</h3>
+                    <ul>
+                        <li>延迟加载</li>
+                        <li>流式处理</li>
+                        <li>智能缓存</li>
+                        <li>并行执行</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🔧 可扩展性</h3>
+                    <ul>
+                        <li>插件系统</li>
+                        <li>Skill 框架</li>
+                        <li>Hook 事件</li>
+                        <li>MCP 协议</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Patterns Section -->
+        <section id="patterns">
+            <h2>🧩 核心设计模式</h2>
+
+            <h3>1. 类型安全工厂模式 (Tool.ts)</h3>
+            <pre><code>// Tool 定义使用 buildTool 工厂
+const TOOL_DEFAULTS = {
+  isEnabled: () => true,
+  isConcurrencySafe: () => false,
+  // fail-closed 默认值
+}
+
+export function buildTool&lt;D extends AnyToolDef&gt;(def: D): BuiltTool&lt;D&gt; {
+  return { ...TOOL_DEFAULTS, ...def }
+}</code></pre>
+            <div class="highlight">
+                <strong>要点</strong>: Fail-closed 默认 (假设不安全)，TypeScript 条件类型保留精确类型，60+ 工具共享统一接口
+            </div>
+
+            <h3>2. 三层命令系统</h3>
+            <pre><code>type Command =
+  | PromptCommand    // 模型调用 → 对话内容
+  | LocalCommand     // 本地执行 → 文本结果
+  | LocalJSXCommand  // UI 渲染 → React 组件</code></pre>
+            <div class="highlight">
+                <strong>要点</strong>: PromptCommand 用于 Skills，LocalCommand 用于工具型命令，LocalJSXCommand 用于交互式命令
+            </div>
+
+            <h3>3. 分层配置</h3>
+            <pre><code>Enterprise > Local > Project > User > Dynamic > Plugin > Claude.ai</code></pre>
+            <div class="highlight">
+                <strong>要点</strong>: 清晰优先级覆盖，Auth 状态变化实时生效，MCP 服务器 7 层配置
+            </div>
+
+            <h3>4. 流式 Accumulator</h3>
+            <pre><code>for await (const chunk of stream) {
+  accumulator.add(chunk)
+  yield partialResult  // 渐进式输出
+}</code></pre>
+
+            <h3>5. 上下文隔离</h3>
+            <pre><code>function createSubagentContext(parent: Context): Context {
+  return {
+    ...parent,
+    setAppState: isAsync ? noop : parent.setAppState,
+    abortController: isAsync ? new AbortController() : parent.abortController
+  }
+}</code></pre>
+
+            <h3>6. 极简 Store</h3>
+            <pre><code>export function createStore&lt;T&gt;(initialState: T): Store&lt;T&gt; {
+  let state = initialState
+  const listeners = new Set&lt;Listener&gt;()
+  return {
+    getState: () => state,
+    setState: (updater) => {
+      const next = updater(state)
+      if (Object.is(next, state)) return
+      state = next
+      listeners.forEach(l =&gt; l())
+    },
+    subscribe: (listener) =&gt; { ... }
+  }
+}</code></pre>
+            <div class="highlight tip">
+                <strong>35 行替代 Redux</strong>: Object.is() 精确变更检测，函数式更新，Set-based 订阅
+            </div>
+        </section>
+
+        <!-- Modules Section -->
+        <section id="modules">
+            <h2>📚 模块详情</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>模块</th>
+                        <th>文件数</th>
+                        <th>核心内容</th>
+                        <th>关键模式</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Entry & Core</strong></td>
+                        <td>15</td>
+                        <td>启动流程、上下文、初始化</td>
+                        <td>并行预取、特性门控</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tools System</strong></td>
+                        <td>21</td>
+                        <td>60+ 工具、执行、安全</td>
+                        <td>类型工厂、延迟加载</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Commands System</strong></td>
+                        <td>10</td>
+                        <td>100+ 命令、Skills</td>
+                        <td>三层命令、懒加载</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Components System</strong></td>
+                        <td>10</td>
+                        <td>React/Ink UI</td>
+                        <td>React Compiler、混合渲染</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Skills System</strong></td>
+                        <td>10</td>
+                        <td>Skill 加载、Hooks</td>
+                        <td>Frontmatter、热重载</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tasks & Agents</strong></td>
+                        <td>15</td>
+                        <td>Task、Agent、Swarms</td>
+                        <td>文件锁、上下文隔离</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Query & State</strong></td>
+                        <td>8</td>
+                        <td>Query、Store、Messages</td>
+                        <td>极简 Store、流式</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Services Layer</strong></td>
+                        <td>12</td>
+                        <td>API、MCP、Compact、Analytics</td>
+                        <td>多 Provider、指数退避</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Utils & Helpers</strong></td>
+                        <td>10</td>
+                        <td>Auth、Config、Errors</td>
+                        <td>分层配置、Sink 日志</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Bridge & Remote</strong></td>
+                        <td>8</td>
+                        <td>CCR、Daemon</td>
+                        <td>v1/v2 协议、SSE</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hooks & Keybindings</strong></td>
+                        <td>2</td>
+                        <td>Hooks、Keybindings</td>
+                        <td>29 事件、Chord 序列</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Insights Section -->
+        <section id="insights">
+            <h2>💡 可复用经验</h2>
+
+            <h3>1. 工具系统经验</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>统一接口</h4>
+                    <p>60+ 工具共享统一接口，新增工具成本极低。Tool&lt;Input, Output, Progress&gt; 泛型设计。</p>
+                </div>
+                <div class="card">
+                    <h4>Fail-Closed</h4>
+                    <p>默认不安全，必须显式声明安全属性。isConcurrencySafe 默认 false。</p>
+                </div>
+                <div class="card">
+                    <h4>延迟加载</h4>
+                    <p>ToolSearch 延迟大工具 schema，节省 context window。</p>
+                </div>
+            </div>
+
+            <h3>2. 权限系统经验</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>渐进式权限</h4>
+                    <p>从 auto 到 plan 到 bypassPermissions 的渐进式安全模型。</p>
+                </div>
+                <div class="card">
+                    <h4>多层检查</h4>
+                    <p>hooks → rules → dialogs，每层都可拦截。</p>
+                </div>
+                <div class="card">
+                    <h4>自动分类</h4>
+                    <p>Security classifier 辅助 auto 模式决策。</p>
+                </div>
+            </div>
+
+            <h3>3. Skill 系统经验</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Markdown + YAML</h4>
+                    <p>人类可读，机器可解析。Frontmatter 定义元数据。</p>
+                </div>
+                <div class="card">
+                    <h4>多层发现</h4>
+                    <p>Managed → User → Project → Additional → Legacy。</p>
+                </div>
+                <div class="card">
+                    <h4>热重载</h4>
+                    <p>Chokidar + debounce，开发体验好。</p>
+                </div>
+            </div>
+
+            <h3>4. Agent 协调经验</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Fork 模式</h4>
+                    <p>继承完整父上下文，cache 共享。</p>
+                </div>
+                <div class="card">
+                    <h4>Resume 模式</h4>
+                    <p>从 transcripts 重建状态，后台任务。</p>
+                </div>
+                <div class="card">
+                    <h4>团队文件</h4>
+                    <p>文件系统作为协调层，支持多后端。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security Section -->
+        <section id="security">
+            <h2>🔒 安全架构</h2>
+
+            <h3>多层防御</h3>
+            <div class="diagram">
+                <pre>
+┌─────────────────────────────────────┐
+│  Layer 1: Input Validation          │
+│  - Zod schema validation            │
+│  - Tool-specific validateInput()    │
+├─────────────────────────────────────┤
+│  Layer 2: Hook Interception         │
+│  - PreToolUse hooks can deny        │
+│  - Pattern matching                 │
+├─────────────────────────────────────┤
+│  Layer 3: Permission Rules          │
+│  - alwaysAllow/alwaysDeny/alwaysAsk │
+│  - Glob pattern matching            │
+├─────────────────────────────────────┤
+│  Layer 4: Interactive Dialog        │
+│  - User confirmation                │
+│  - Risk classification              │
+├─────────────────────────────────────┤
+│  Layer 5: Sandbox (Bash)            │
+│  - Containerized execution          │
+│  - Network isolation                │
+└─────────────────────────────────────┘
+                </pre>
+            </div>
+
+            <h3>Bash 安全特性</h3>
+            <ul>
+                <li><strong>20+ 验证器</strong>: 解析器差异防护 (CR, backslash-escaped operators)</li>
+                <li><strong>危险命令检测</strong>: rm, git reset, database operations</li>
+                <li><strong>标志混淆检测</strong>: ANSI-C quoting, quote concatenation</li>
+                <li><strong>环境变量保护</strong>: IFS injection 阻止, /proc access 限制</li>
+                <li><strong>Zsh 特定保护</strong>: zmodload, sysopen, ztcp 拦截</li>
+            </ul>
+
+            <h3>MCP 安全特性</h3>
+            <ul>
+                <li><strong>企业策略控制</strong>: allowlist/denylist</li>
+                <li><strong>项目级审批</strong>: Server approval workflow</li>
+                <li><strong>安全 Token 存储</strong>: OS keychain</li>
+                <li><strong>OAuth PKCE</strong>: 防止截获</li>
+                <li><strong>SSRF 防护</strong>: HTTP hooks 域名白名单</li>
+            </ul>
+        </section>
+
+        <!-- Performance Section -->
+        <section id="performance">
+            <h2>⚡ 性能优化</h2>
+
+            <h3>启动优化</h3>
+            <pre><code>// main.tsx 第 1-20 行: Side effects 优先
+profileCheckpoint('main_tsx_entry')
+startMdmRawRead()        // 并行预取
+startKeychainPrefetch()  // ~65ms saved</code></pre>
+
+            <h3>运行时优化</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>React Compiler</h4>
+                    <p>自动 memoization，无需手动 useMemo。</p>
+                </div>
+                <div class="card">
+                    <h4>WeakMap 缓存</h4>
+                    <p>对象关联缓存，不阻止 GC。</p>
+                </div>
+                <div class="card">
+                    <h4>流式处理</h4>
+                    <p>渐进式结果，不等待完整响应。</p>
+                </div>
+                <div class="card">
+                    <h4>虚拟化</h4>
+                    <p>大量消息列表，只渲染可见部分。</p>
+                </div>
+            </div>
+
+            <h3>Context Window 优化</h3>
+            <ul>
+                <li><strong>Auto-compact</strong>: 自动上下文压缩 (effective_window - 13,000 buffer)</li>
+                <li><strong>Micro-compact</strong>: 清除工具结果，保留对话流</li>
+                <li><strong>Tool result budget</strong>: 限制输出大小，长结果磁盘存储</li>
+                <li><strong>Circuit breaker</strong>: 3 次连续失败后停止</li>
+            </ul>
+        </section>
+
+        <!-- Easter Eggs -->
+        <section>
+            <h2>🥚 有趣彩蛋</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Feature Flags</h4>
+                    <p>50+ feature flags 控制功能，支持运行时切换。</p>
+                </div>
+                <div class="card">
+                    <h4>Internal Commands</h4>
+                    <p>25+ ant-only 命令，如 bughunter, mockLimits。</p>
+                </div>
+                <div class="card">
+                    <h4>Daltonization</h4>
+                    <p>色盲用户主题支持，绿色变蓝色。</p>
+                </div>
+                <div class="card">
+                    <h4>Undercover Mode</h4>
+                    <p>公共仓库剥离所有 attribution。</p>
+                </div>
+                <div class="card">
+                    <h4>GrowthBook</h4>
+                    <p>服务端特性评估，支持环境变量覆盖。</p>
+                </div>
+                <div class="card">
+                    <h4>MCP Channel</h4>
+                    <p>服务器推送消息到对话，实时通知。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section>
+            <h2>📊 项目完成统计</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="number">11</div>
+                    <div class="label">分析模块</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">121</div>
+                    <div class="label">分析文件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">35+</div>
+                    <div class="label">生成笔记</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">60+</div>
+                    <div class="label">工具数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">100+</div>
+                    <div class="label">命令数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">29</div>
+                    <div class="label">Hook 事件</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Claude Code 源码深度研究 - Rafa_learn_cc</p>
+        <p>完成日期: 2026-04-01 | 分析文件: 121 | 生成笔记: 35+</p>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
